@@ -1,0 +1,18 @@
+input {
+{% for member in logstash_indexer_redis_hosts %}
+  redis {
+    host => "{{ member }}"
+    data_type => "list"
+    key => "logstash"
+    codec => json
+  }
+{% endfor %}
+}
+
+output {
+  stdout {}
+  elasticsearch {
+    protocol => "http"
+    host => "127.0.0.1"
+  }
+}

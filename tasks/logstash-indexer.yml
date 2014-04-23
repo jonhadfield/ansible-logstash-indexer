@@ -1,0 +1,43 @@
+---
+# Prereqs
+- name: create logstash indexer group
+  group: name=lsindex state=present
+- name: create logstash indexer user
+  user: name=lsindex state=present createhome=no shell=/bin/bash group=lsindex
+
+# Online Install
+- name: online install | download logstash
+  get_url: url=https://download.elasticsearch.org/logstash/logstash/logstash-{{ logstash_indexer_version }}.tar.gz dest=/var/tmp/logstash-{{ logstash_indexer_version }}.tar.gz
+- name: online install | extract logstash installation
+  unarchive: src=/var/tmp/logstash-{{ logstash_indexer_version }}.tar.gz copy=no dest={{ logstash_indexer_base_install_dir }}/ mode=0700 creates={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash
+  notify:
+    - restart logstash-indexer
+  when: logstash_indexer_online_install
+
+# Offline Install
+- name: copy and extract logstash installation
+  unarchive: src=logstash-indexer/logstash-{{ logstash_indexer_version }}.tar.gz dest={{ logstash_indexer_base_install_dir }}/ mode=0700 creates={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash
+  notify:
+    - restart logstash-indexer
+  when: not logstash_indexer_online_install
+
+# Configure
+- name: install logstash indexer startup script
+  template: src=logstash-indexer-sysvinit.j2 dest=/etc/init.d/logstash-indexer owner=root group=root mode=0755
+  notify:
+    - restart logstash-indexer
+- name: install logstash indexer configuration
+  template: src=logstash-indexer.conf.j2 dest={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/logstash-indexer.conf owner=lsindex group=lsindex mode=0755
+  notify:
+    - restart logstash-indexer
+- name: grant directory permissions to logstash indexer user for installation directory
+  file: path={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} owner=lsindex group=lsindex recurse=true
+- name: create logstash-indexer logs directory
+  file: dest={{ logstash_indexer_base_logs_dir }}/logstash-indexer state=directory
+- name: grant directory permissions to logstash indexer user for logs directory
+  file: path={{ logstash_indexer_base_logs_dir }}/logstash-indexer owner=lsindex group=lsindex recurse=true
+- name: create symlink to logstash indexer installation
+  file: src={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} path={{ logstash_indexer_base_install_dir }}/logstash-indexer state=link
+# Run
+- name: ensure logstash indexer is started and starts on boot
+  service: name=logstash-indexer state=started enabled=yes

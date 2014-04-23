@@ -1,0 +1,15 @@
+---
+logstash_indexer_online_install: true
+logstash_indexer_installer_path: /var/logstash_indexer
+logstash_indexer_version: 1.4.0
+logstash_indexer_base_install_dir: /apps
+logstash_indexer_base_logs_dir: /logs
+logstash_indexer_base_data_dir: /data
+logstash_indexer_elasticsearch_cluster_members:
+    - es1
+    - es2
+    - es3
+logstash_indexer_redis_hosts:
+    - redis1
+    - redis2
+    - redis3
