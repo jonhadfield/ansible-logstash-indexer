@@ -8,6 +8,7 @@
 # Online Install
 - name: online install | download logstash
   get_url: url=https://download.elasticsearch.org/logstash/logstash/logstash-{{ logstash_indexer_version }}.tar.gz dest=/var/tmp/logstash-{{ logstash_indexer_version }}.tar.gz
+  when: logstash_indexer_online_install
 - name: online install | extract logstash installation
   unarchive: src=/var/tmp/logstash-{{ logstash_indexer_version }}.tar.gz copy=no dest={{ logstash_indexer_base_install_dir }}/ mode=0700 creates={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash
   notify:
