@@ -13,3 +13,4 @@ logstash_indexer_redis_hosts:
     - redis1
     - redis2
     - redis3
+logstash_indexer_java_home: /apps/java

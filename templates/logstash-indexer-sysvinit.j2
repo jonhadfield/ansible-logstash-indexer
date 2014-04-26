@@ -17,6 +17,9 @@
 ### END INIT INFO
 
 export HOME={{ logstash_indexer_base_install_dir }}/logstash-indexer
+{% if logstash_indexer_java_home is defined %}
+export JAVA_HOME={{ logstash_indexer_java_home }}
+{% endif %}
 
 checkJava() {
     if [ -x "$JAVA_HOME/bin/java" ]; then

@@ -26,6 +26,7 @@ Role Variables
         - redis1
         - redis2
         - redis3
+    logstash_indexer_java_home:                               # Specify java rather than try to detect
 
 
 Dependencies
