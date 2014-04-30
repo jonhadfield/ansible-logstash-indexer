@@ -17,7 +17,7 @@
 
 # Offline Install
 - name: offline install | copy and extract logstash installation
-  unarchive: src={{ logstash_indexer_installer_path }}/logstash-{{ logstash_indexer_version }}.tar.gz dest={{ logstash_indexer_base_install_dir }}/ mode=0700 creates={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash
+  unarchive: src={{ logstash_indexer_installer_path }} dest={{ logstash_indexer_base_install_dir }}/ mode=0700 creates={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash
   notify:
     - restart logstash-indexer
   when: not logstash_indexer_online_install
