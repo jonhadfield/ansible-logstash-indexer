@@ -12,7 +12,8 @@ input {
 output {
   stdout {}
   elasticsearch {
-    protocol => "http"
-    host => "127.0.0.1"
+    protocol => "{{ logstash_indexer_elasticsearch_protocol }}"
+    host => "{{ logstash_indexer_elasticsearch_host }}"
+    port => "{{ logstash_indexer_elasticsearch_port }}"
   }
 }

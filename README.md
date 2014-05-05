@@ -18,14 +18,13 @@ Role Variables
     logstash_indexer_base_install_dir: /apps                  # Where logstash will be installed
     logstash_indexer_base_logs_dir: /logs                     # Where logstash will log to
     logstash_indexer_base_data_dir: /data                     # Where logstash will store its data
-    logstash_indexer_elasticsearch_cluster_members:           # Which elasticsearch members to output to
-        - es1
-        - es2
-        - es3
     logstash_indexer_redis_hosts:                             # Which redis servers to read from
         - redis1
         - redis2
         - redis3
+    logstash_indexer_elasticsearch_protocol: http             # Elasticsearch server output protocol
+    logstash_indexer_elasticsearch_host: es1                  # Elasticsearch server output host
+    logstash_indexer_elasticsearch_port: 9200                 # Elasticsearch server output port
     logstash_indexer_java_home:                               # Specify java rather than try to detect
 
 
