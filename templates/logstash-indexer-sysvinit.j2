@@ -1,84 +1,137 @@
-#!/bin/bash
+#! /bin/sh
 #
-# logstash indexer
+#       /etc/init.d/logstash-indexer
 #
-# chkconfig:   2345 80 20
-# description: Starts and stops a single logstash indexer instance on this system
+#       Starts Logstash as a daemon
 #
+# chkconfig: 2345 90 10
+# description: Starts Logstash Indexer as a daemon.
 
 ### BEGIN INIT INFO
-# Provides: Logstash 1.4
-# Required-Start: $network $named
-# Required-Stop: $network $named
+# Provides: logstash
+# Required-Start: $local_fs $remote_fs
+# Required-Stop: $local_fs $remote_fs
 # Default-Start: 2 3 4 5
-# Default-Stop: 0 1 6
-# Short-Description: This service manages logstash indexer
-# Description: 
+# Default-Stop: S 0 1 6
+# Short-Description: Logstash Indexer
+# Description: Starts Logstash Indexer as a daemon.
 ### END INIT INFO
 
-export HOME={{ logstash_indexer_base_install_dir }}/logstash-indexer
+. /etc/rc.d/init.d/functions
+
+NAME=logstash-indexer
+DESC="Logstash Indexer Daemon"
+DEFAULT=/etc/sysconfig/$NAME
+
+if [ `id -u` -ne 0 ]; then
+   echo "You need root privileges to run this script"
+   exit 1
+fi
+
+# The following variables can be overwritten in $DEFAULT
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
 {% if logstash_indexer_java_home is defined %}
 export JAVA_HOME={{ logstash_indexer_java_home }}
 {% endif %}
 
-checkJava() {
-    if [ -x "$JAVA_HOME/bin/java" ]; then
-        JAVA="$JAVA_HOME/bin/java"
-    else
-        JAVA=`which java`
-    fi
+# See contents of file named in $DEFAULT for comments
+LS_USER=lsindex
+LS_GROUP=lsindex
+LS_HOME={{ logstash_indexer_base_install_dir }}/logstash-indexer
+LS_HEAP_SIZE="500m"
+LS_JAVA_OPTS="-Djava.io.tmpdir=${LS_HOME}"
+LS_LOG_FILE={{ logstash_indexer_base_logs_dir }}/logstash-indexer/$NAME.log
+LS_CONF_DIR={{ logstash_indexer_base_install_dir }}/logstash-indexer/logstash-indexer.conf
+LS_OPEN_FILES=16384
+LS_NICE=19
+LS_OPTS=""
+LS_PIDFILE=/var/run/$NAME.pid
 
-    if [ ! -x "$JAVA" ]; then
-        echo "Could not find any executable java binary. Please install java in your PATH or set JAVA_HOME"
-        exit 1
-    fi
+# End of variables that can be overwritten in $DEFAULT
+
+if [ -f "$DEFAULT" ]; then
+  . "$DEFAULT"
+fi
+
+# Define other required variables
+PID_FILE=${LS_PIDFILE}
+
+DAEMON="{{ logstash_indexer_base_install_dir }}/logstash-indexer/bin/logstash"
+DAEMON_OPTS="agent -f ${LS_CONF_DIR} -l ${LS_LOG_FILE} ${LS_OPTS}"
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+
+  if [ -z "$DAEMON" ]; then
+    echo "not found - $DAEMON"
+    exit 1
+  fi
+
+  if pidofproc -p "$PID_FILE" >/dev/null; then
+    exit 0
+  fi
+
+  # Prepare environment
+  HOME="${HOME:-$LS_HOME}"
+  JAVA_OPTS="${LS_JAVA_OPTS}"
+  ulimit -n ${LS_OPEN_FILES}
+  cd "${LS_HOME}"
+  export PATH HOME JAVA_OPTS LS_HEAP_SIZE LS_JAVA_OPTS LS_USE_GC_LOGGING
+  test -n "${JAVACMD}" && export JAVACMD
+
+  nice -n ${LS_NICE} runuser -s /bin/sh -c "exec $DAEMON $DAEMON_OPTS" ${LS_USER} >> $LS_LOG_FILE 2>&1 < /dev/null &
+
+  RETVAL=$?
+  local PID=$!
+  # runuser forks rather than execing our process.
+  usleep 500000
+  JAVA_PID=$(ps axo ppid,pid | awk -v "ppid=$PID" '$1==ppid {print $2}')
+  PID=${JAVA_PID:-$PID}
+  echo $PID > $PID_FILE
+  [ "$PID" = "$JAVA_PID" ] && success
 }
 
-
-check_running () {
-    APP_RUNNING=`ps -ef | grep logstash-indexer.conf | grep -v grep | wc -l`
-    return $APP_RUNNING
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+    killproc -p $PID_FILE $DAEMON
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${PID_FILE}
 }
 
 case "$1" in
-'start')
-check_running
-RUNNING=$?
-if [ $RUNNING -gt 0 ]; then
-    echo "logstash-indexer already running."
-else
-    checkJava
-    su lsindex -c '{{ logstash_indexer_base_install_dir }}/logstash-indexer/bin/logstash -f {{ logstash_indexer_base_install_dir }}/logstash-indexer/logstash-indexer.conf > {{ logstash_indexer_base_logs_dir }}/logstash-indexer/logstash-indexer.log 2>&1 &'
-fi
-;;
-'stop')
-check_running
-RUNNING=$?
-if [ $RUNNING -gt 0 ]; then
-    /usr/bin/kill -9 `ps auxww |grep logstash-indexer.conf | grep -v grep | awk '{print $2}'`
-else
-    echo "logstash-indexer not running."
-    exit 1;
-fi
-;;
-'status')
-check_running
-RUNNING=$?
-if [ $RUNNING -gt 0 ]; then
-    echo "logstash-indexer is running..."
-    exit 0;
-else
-    echo "logstash-indexer is dead."
-    exit 1;
-fi
-;;
-'restart')
-/etc/init.d/logstash-indexer stop
-/etc/init.d/logstash-indexer start
-;;
-*)
-echo "Usage: $0 { start | stop | status | restart }"
-;;
+  start)
+    echo -n "Starting $DESC: "
+    do_start
+    touch /var/run/$NAME
+    ;;
+  stop)
+    echo -n "Stopping $DESC: "
+    do_stop
+    rm -f /var/run/$NAME
+    ;;
+  restart|reload)
+    echo -n "Restarting $DESC: "
+    do_stop
+    do_start
+    ;;
+  status)
+    echo -n "$DESC"
+    status -p $PID_FILE
+    exit $?
+    ;;
+  *)
+    echo "Usage: $SCRIPTNAME {start|stop|status|restart}" >&2
+    exit 3
+    ;;
 esac
+
+echo
 exit 0
-EOF
