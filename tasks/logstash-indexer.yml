@@ -36,7 +36,7 @@
 - name: create logstash-indexer logs directory
   file: dest={{ logstash_indexer_base_logs_dir }}/logstash-indexer state=directory
 - name: grant directory permissions to logstash indexer user for logs directory
-  file: path={{ logstash_indexer_base_logs_dir }}/logstash-indexer owner=lsindex group=lsindex recurse=true
+  file: path={{ logstash_indexer_base_logs_dir }}/logstash-indexer owner=lsindex group=lsindex
 - name: create symlink to logstash indexer installation
   file: src={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} path={{ logstash_indexer_base_install_dir }}/logstash-indexer state=link force=yes
 # FIX: Patch for 1.4.0 issue when overriding JAVA_HOME (See https://logstash.jira.com/browse/LOGSTASH-1984)
