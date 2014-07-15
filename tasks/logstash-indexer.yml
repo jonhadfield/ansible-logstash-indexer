@@ -1,9 +1,9 @@
 ---
 # Prereqs
 - name: create logstash indexer group
-  group: name=lsindex state=present
+  group: name={{ logstash_indexer_group }} state=present
 - name: create logstash indexer user
-  user: name=lsindex state=present createhome=no shell=/bin/bash group=lsindex
+  user: name={{ logstash_indexer_user }} state=present createhome=no shell=/bin/bash group={{ logstash_indexer_group }}
 
 # Online Install
 - name: online install | download logstash
@@ -28,20 +28,20 @@
   notify:
     - restart logstash-indexer
 - name: install logstash indexer configuration
-  template: src=logstash-indexer.conf.j2 dest={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/logstash-indexer.conf owner=lsindex group=lsindex mode=0755
+  template: src=logstash-indexer.conf.j2 dest={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/logstash-indexer.conf owner={{ logstash_indexer_user }} group={{ logstash_indexer_group }} mode=0755
   notify:
     - restart logstash-indexer
 - name: grant directory permissions to logstash indexer user for installation directory
-  file: path={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} owner=lsindex group=lsindex recurse=true
+  file: path={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} owner={{ logstash_indexer_user }} group={{ logstash_indexer_group }} recurse=true
 - name: create logstash-indexer logs directory
   file: dest={{ logstash_indexer_base_logs_dir }}/logstash-indexer state=directory
 - name: grant directory permissions to logstash indexer user for logs directory
-  file: path={{ logstash_indexer_base_logs_dir }}/logstash-indexer owner=lsindex group=lsindex
+  file: path={{ logstash_indexer_base_logs_dir }}/logstash-indexer owner={{ logstash_indexer_user }} group={{ logstash_indexer_group }}
 - name: create symlink to logstash indexer installation
   file: src={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }} path={{ logstash_indexer_base_install_dir }}/logstash-indexer state=link force=yes
 # FIX: Patch for 1.4.0 issue when overriding JAVA_HOME (See https://logstash.jira.com/browse/LOGSTASH-1984)
 - name: patching logstash 1.4.0 bug LOGSTASH-1984
-  copy: src=logstash.lib.sh dest={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash.lib.sh owner=lsindex group=lsindex mode=0755
+  copy: src=logstash.lib.sh dest={{ logstash_indexer_base_install_dir }}/logstash-{{ logstash_indexer_version }}/bin/logstash.lib.sh owner={{ logstash_indexer_user }} group={{ logstash_indexer_group }} mode=0755
   when: logstash_indexer_version == "1.4.0" and logstash_indexer_java_home
 # Run
 - name: ensure logstash indexer is started and starts on boot
