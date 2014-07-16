@@ -36,10 +36,10 @@ export JAVA_HOME={{ logstash_indexer_java_home }}
 {% endif %}
 
 # See contents of file named in $DEFAULT for comments
-LS_USER=lsindex
-LS_GROUP=lsindex
+LS_USER={{ logstash_indexer_user }}
+LS_GROUP={{ logstash_indexer_group }}
 LS_HOME={{ logstash_indexer_base_install_dir }}/logstash-indexer
-LS_HEAP_SIZE="500m"
+LS_HEAP_SIZE="{{ logstash_indexer_heap_size }}"
 LS_JAVA_OPTS="-Djava.io.tmpdir=${LS_HOME}"
 LS_LOG_FILE={{ logstash_indexer_base_logs_dir }}/logstash-indexer/$NAME.log
 LS_DAEMON_LOG_FILE={{ logstash_indexer_base_logs_dir }}/logstash-indexer/${NAME}_daemon.log

@@ -5,6 +5,9 @@ input {
     data_type => "list"
     key => "logstash"
     codec => json
+{% if logstash_indexer_redis_input_threads is defined and logstash_indexer_redis_input_threads != None %}
+    threads => {{ logstash_indexer_redis_input_threads }}
+{% endif %}
   }
 {% endfor %}
 }
@@ -17,7 +20,6 @@ input {
 }
 
 output {
-  stdout {}
   elasticsearch {
     protocol => "{{ logstash_indexer_elasticsearch_protocol }}"
     host => "{{ logstash_indexer_elasticsearch_host }}"
